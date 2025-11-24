@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, FileText, Sparkles, Zap, Check } from "lucide-react";
 import BackgroundPaths from "@/components/BackgroundPaths";
 import Footer from "@/components/Footer";
+import Header from "@/components/Header";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-gradient-subtle relative">
       <BackgroundPaths />
+      <Header />
       
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16 md:py-24 relative">
@@ -44,7 +46,7 @@ export default function Index() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: "0.2s" }}>
             <Button
               size="lg"
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/auth?mode=signup")}
               className="gap-2 text-lg px-8 shadow-lg hover:shadow-xl transition-all"
             >
               Começar Agora
@@ -53,15 +55,15 @@ export default function Index() {
             <Button
               size="lg"
               variant="outline"
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/auth?mode=login")}
               className="gap-2 text-lg px-8 border-2"
             >
-              Fazer Login
+              Já tenho conta
             </Button>
           </div>
 
           {/* Features Grid */}
-          <div className="grid md:grid-cols-3 gap-6 mt-20 animate-fade-in" style={{ animationDelay: "0.4s" }}>
+          <div id="features" className="grid md:grid-cols-3 gap-6 mt-20 animate-fade-in" style={{ animationDelay: "0.4s" }}>
             <div className="bg-card/80 backdrop-blur-sm p-8 rounded-2xl shadow-card border border-border/50 hover:shadow-lg transition-all hover:scale-105">
               <div className="h-14 w-14 bg-gradient-primary rounded-xl flex items-center justify-center mb-6 shadow-lg">
                 <FileText className="h-7 w-7 text-primary-foreground" />
@@ -102,7 +104,7 @@ export default function Index() {
       </div>
 
       {/* Benefits Section */}
-      <div className="bg-card/30 backdrop-blur-sm border-y py-20 relative">
+      <div id="benefits" className="bg-card/30 backdrop-blur-sm border-y py-20 relative">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto space-y-12">
             <div className="text-center space-y-4">
@@ -144,7 +146,7 @@ export default function Index() {
           </p>
           <Button
             size="lg"
-            onClick={() => navigate("/auth")}
+            onClick={() => navigate("/auth?mode=signup")}
             className="gap-2 text-lg px-8 bg-white text-primary hover:bg-white/90 shadow-xl"
           >
             Começar Agora
