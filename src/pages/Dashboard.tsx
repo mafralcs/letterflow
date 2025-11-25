@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus, LogOut, Settings, FileText, Calendar, User as UserIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
+import logo from "@/assets/letterflow-logo.png";
 
 interface Project {
   id: string;
@@ -117,9 +118,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gradient-subtle">
       <header className="border-b bg-card/80 backdrop-blur sticky top-0 z-10 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="font-display text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            LetterFlow
-          </h1>
+          <img src={logo} alt="LetterFlow" className="h-8 w-auto" />
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {user?.email}

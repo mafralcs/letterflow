@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import logo from "@/assets/letterflow-logo.png";
 
 export default function Header() {
   const navigate = useNavigate();
@@ -13,12 +14,7 @@ export default function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="h-10 w-10 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <span className="text-xl font-bold text-white">L</span>
-            </div>
-            <span className="font-display text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              LetterFlow
-            </span>
+            <img src={logo} alt="LetterFlow" className="h-9 w-auto" />
           </div>
 
           {/* Navigation - Hidden on mobile */}
