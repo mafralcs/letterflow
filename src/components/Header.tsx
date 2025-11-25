@@ -13,8 +13,12 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <img src={logo} alt="LetterFlow" className="h-9 w-auto" />
+          <div className="flex items-center gap-2 cursor-pointer group" onClick={() => navigate("/")}>
+            <img 
+              src={logo} 
+              alt="LetterFlow" 
+              className="h-12 w-auto transition-all duration-300 group-hover:scale-105 group-hover:brightness-110" 
+            />
           </div>
 
           {/* Navigation - Hidden on mobile */}
