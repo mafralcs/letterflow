@@ -203,10 +203,10 @@ export default function NewsletterView() {
                 <CardHeader>
                   <CardTitle>Preview da Newsletter</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="max-h-none overflow-visible">
                   {newsletter.html_content ? (
                     <div
-                      className="prose prose-sm max-w-none"
+                      className="prose prose-sm max-w-none w-full [&>*]:max-w-none"
                       dangerouslySetInnerHTML={{ __html: newsletter.html_content }}
                     />
                   ) : (
