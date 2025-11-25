@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus, LogOut, Settings, FileText, Calendar, User as UserIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
@@ -19,6 +20,7 @@ interface Project {
 export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -45,14 +47,19 @@ export default function Dashboard() {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("name")
+        .select("name, avatar_url")
         .eq("id", userId)
         .single();
 
       if (error && error.code !== "PGRST116") throw error;
 
-      if (data?.name) {
-        setUserName(data.name);
+      if (data) {
+        if (data.name) {
+          setUserName(data.name);
+        }
+        if (data.avatar_url) {
+          setAvatarUrl(data.avatar_url);
+        }
       }
     } catch (error: any) {
       console.error("Erro ao carregar perfil:", error.message);
@@ -117,8 +124,18 @@ export default function Dashboard() {
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {user?.email}
             </span>
-            <Button variant="outline" size="icon" onClick={() => navigate("/account-settings")}>
-              <UserIcon className="h-4 w-4" />
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/account-settings")}
+              className="gap-2 h-10 px-3"
+            >
+              <Avatar className="h-7 w-7">
+                <AvatarImage src={avatarUrl} alt={userName} />
+                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                  {userName ? userName.charAt(0).toUpperCase() : <UserIcon className="h-4 w-4" />}
+                </AvatarFallback>
+              </Avatar>
+              <span className="hidden md:inline text-sm">{userName || "Conta"}</span>
             </Button>
             <Button variant="outline" size="icon" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
