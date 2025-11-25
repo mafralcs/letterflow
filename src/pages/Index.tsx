@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, FileText, Sparkles, Zap, Check } from "lucide-react";
+import { BackgroundPaths } from "@/components/ui/background-paths";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 
@@ -20,6 +21,7 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-gradient-subtle relative">
+      <BackgroundPaths />
       <Header />
       
       {/* Hero Section */}
