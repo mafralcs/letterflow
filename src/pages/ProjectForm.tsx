@@ -7,8 +7,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Trash2 } from "lucide-react";
 
 export default function ProjectForm() {
   const { id } = useParams();
@@ -17,6 +28,7 @@ export default function ProjectForm() {
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -111,6 +123,36 @@ export default function ProjectForm() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    
+    setDeleting(true);
+
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Projeto deletado!",
+        description: "O projeto foi removido com sucesso.",
+      });
+
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Erro ao deletar projeto",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -267,6 +309,57 @@ export default function ProjectForm() {
                 </Button>
               </div>
             </form>
+
+            {isEditing && (
+              <div className="mt-8 pt-6 border-t border-destructive/20">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-destructive">Zona de Perigo</h3>
+                  <p className="text-sm text-muted-foreground">
+                    A exclusão do projeto removerá permanentemente todas as newsletters associadas.
+                  </p>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        className="mt-2"
+                        disabled={deleting}
+                      >
+                        {deleting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Deletando...
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Deletar Projeto
+                          </>
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação não poderá ser desfeita. Isso irá deletar permanentemente o
+                          projeto <strong>"{formData.name}"</strong> e todas as newsletters
+                          associadas a ele.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Sim, deletar projeto
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>
