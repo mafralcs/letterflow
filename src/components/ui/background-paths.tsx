@@ -19,6 +19,7 @@ function FloatingPaths({ position }: { position: number }) {
         className="w-full h-full text-primary"
         viewBox="0 0 696 316"
         fill="none"
+        preserveAspectRatio="xMidYMid slice"
       >
         <title>Background Paths</title>
         {paths.map((path) => (
@@ -27,11 +28,11 @@ function FloatingPaths({ position }: { position: number }) {
             d={path.d}
             stroke="currentColor"
             strokeWidth={path.width}
-            strokeOpacity={0.08 + path.id * 0.02}
-            initial={{ pathLength: 0.3, opacity: 0.5 }}
+            strokeOpacity={0.15 + path.id * 0.03}
+            initial={{ pathLength: 0.3, opacity: 0.6 }}
             animate={{
               pathLength: 1,
-              opacity: [0.2, 0.5, 0.2],
+              opacity: [0.4, 0.7, 0.4],
               pathOffset: [0, 1, 0],
             }}
             transition={{
