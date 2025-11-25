@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, LogOut, Settings, FileText, Calendar } from "lucide-react";
+import { Plus, LogOut, Settings, FileText, Calendar, User as UserIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
 
@@ -18,6 +18,7 @@ interface Project {
 
 export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
+  const [userName, setUserName] = useState<string>("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -36,7 +37,26 @@ export default function Dashboard() {
     }
 
     setUser(session.user);
+    loadUserProfile(session.user.id);
     loadProjects();
+  };
+
+  const loadUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", userId)
+        .single();
+
+      if (error && error.code !== "PGRST116") throw error;
+
+      if (data?.name) {
+        setUserName(data.name);
+      }
+    } catch (error: any) {
+      console.error("Erro ao carregar perfil:", error.message);
+    }
   };
 
   const loadProjects = async () => {
@@ -97,6 +117,9 @@ export default function Dashboard() {
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {user?.email}
             </span>
+            <Button variant="outline" size="icon" onClick={() => navigate("/account-settings")}>
+              <UserIcon className="h-4 w-4" />
+            </Button>
             <Button variant="outline" size="icon" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
             </Button>
@@ -107,6 +130,11 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
+            {userName && (
+              <p className="text-lg text-muted-foreground mb-1">
+                Olá, <span className="font-semibold text-foreground">{userName}</span>
+              </p>
+            )}
             <h2 className="text-3xl font-bold font-display">Meus Projetos</h2>
             <p className="text-muted-foreground mt-1">
               Gerencie suas newsletters por projeto
