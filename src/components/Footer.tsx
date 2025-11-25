@@ -1,4 +1,5 @@
 import { Mail, Github, Twitter } from "lucide-react";
+import logo from "@/assets/letterflow-logo.png";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -9,9 +10,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <h3 className="font-display text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              LetterFlow
-            </h3>
+            <img src={logo} alt="LetterFlow" className="h-10 w-auto" />
             <p className="text-sm text-muted-foreground">
               Organize projetos. Cole links. Gere newsletters com IA.
             </p>

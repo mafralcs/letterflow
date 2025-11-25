@@ -9,11 +9,11 @@ export default function BackgroundPaths() {
       >
         <defs>
           <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: "hsl(var(--primary))", stopOpacity: 0.1 }} />
-            <stop offset="100%" style={{ stopColor: "hsl(var(--secondary))", stopOpacity: 0.05 }} />
+            <stop offset="0%" style={{ stopColor: "hsl(var(--primary))", stopOpacity: 0.15 }} />
+            <stop offset="100%" style={{ stopColor: "hsl(var(--primary-glow))", stopOpacity: 0.05 }} />
           </linearGradient>
           <linearGradient id="grad2" x1="100%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style={{ stopColor: "hsl(var(--secondary))", stopOpacity: 0.08 }} />
+            <stop offset="0%" style={{ stopColor: "hsl(var(--primary-glow))", stopOpacity: 0.12 }} />
             <stop offset="100%" style={{ stopColor: "hsl(var(--primary))", stopOpacity: 0.03 }} />
           </linearGradient>
         </defs>
