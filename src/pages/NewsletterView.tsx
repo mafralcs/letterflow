@@ -29,7 +29,48 @@ export default function NewsletterView() {
 
   useEffect(() => {
     loadNewsletter();
-  }, [newsletterId]);
+    
+    // Set up polling if newsletter is generating
+    let pollInterval: NodeJS.Timeout;
+    
+    const startPolling = () => {
+      pollInterval = setInterval(async () => {
+        if (!newsletterId) return;
+        
+        const { data } = await supabase
+          .from('newsletters')
+          .select('status, html_content, text_content, error_message')
+          .eq('id', newsletterId)
+          .single();
+        
+        if (data && data.status !== 'generating') {
+          setNewsletter(prev => prev ? { ...prev, ...data } : null);
+          clearInterval(pollInterval);
+          
+          if (data.status === 'final') {
+            toast({
+              title: "Newsletter gerada!",
+              description: "Sua newsletter está pronta.",
+            });
+          } else if (data.status === 'error') {
+            toast({
+              title: "Erro na geração",
+              description: data.error_message || "Ocorreu um erro ao gerar a newsletter.",
+              variant: "destructive",
+            });
+          }
+        }
+      }, 3000); // Poll every 3 seconds
+    };
+    
+    if (newsletter?.status === 'generating') {
+      startPolling();
+    }
+    
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [newsletterId, newsletter?.status]);
 
   const loadNewsletter = async () => {
     if (!newsletterId) return;
@@ -56,10 +97,11 @@ export default function NewsletterView() {
     }
   };
 
-  const statusLabels: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
+  const statusLabels: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
     draft: { label: "Rascunho", variant: "outline" },
     generating: { label: "Gerando", variant: "secondary" },
     final: { label: "Final", variant: "default" },
+    error: { label: "Erro", variant: "destructive" },
   };
 
   if (loading || !newsletter) {
@@ -120,6 +162,23 @@ export default function NewsletterView() {
               <p className="text-muted-foreground text-center max-w-md">
                 Estamos processando seus links e criando a newsletter. Isso pode levar alguns minutos.
               </p>
+            </CardContent>
+          </Card>
+        ) : newsletter.status === "error" ? (
+          <Card className="shadow-card border-destructive">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <div className="text-destructive text-5xl mb-4">⚠️</div>
+              <h3 className="text-xl font-semibold mb-2">Erro na geração</h3>
+              <p className="text-muted-foreground text-center max-w-md mb-4">
+                {(newsletter as any).error_message || 'Ocorreu um erro ao gerar a newsletter.'}
+              </p>
+              <Button
+                onClick={() => navigate(`/projects/${projectId}/newsletters/${newsletterId}/edit`)}
+                className="gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Tentar Novamente
+              </Button>
             </CardContent>
           </Card>
         ) : (

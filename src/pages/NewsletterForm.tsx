@@ -150,14 +150,25 @@ export default function NewsletterForm() {
         newsletterData = data;
       }
 
-      // Here we would call the n8n webhook
-      // For now, we'll just show a success message and navigate
+      // Call edge function to generate newsletter
       toast({
         title: "Newsletter em geração!",
         description: "Aguarde enquanto processamos seus links...",
       });
 
+      // Navigate first so user sees the generating status
       navigate(`/projects/${projectId}/newsletters/${newsletterData.id}`);
+
+      // Call the edge function in the background
+      supabase.functions
+        .invoke('generate-newsletter', {
+          body: { newsletterId: newsletterData.id }
+        })
+        .then(({ error: functionError }) => {
+          if (functionError) {
+            console.error('Error calling generate function:', functionError);
+          }
+        });
     } catch (error: any) {
       toast({
         title: "Erro",
