@@ -24,9 +24,9 @@ export const AuroraBackground = ({
         <div
           className={cn(
             `
-            [--white-gradient:repeating-linear-gradient(100deg,var(--background)_0%,var(--background)_7%,var(--transparent)_10%,var(--transparent)_12%,var(--background)_16%)]
-            [--dark-gradient:repeating-linear-gradient(100deg,var(--card)_0%,var(--card)_7%,var(--transparent)_10%,var(--transparent)_12%,var(--card)_16%)]
-            [--aurora:repeating-linear-gradient(100deg,var(--primary)_10%,var(--primary-glow)_15%,var(--accent)_20%,var(--primary-glow)_25%,var(--primary)_30%)]
+            [--white-gradient:repeating-linear-gradient(100deg,hsl(var(--background))_0%,hsl(var(--background))_7%,transparent_10%,transparent_12%,hsl(var(--background))_16%)]
+            [--dark-gradient:repeating-linear-gradient(100deg,hsl(var(--card))_0%,hsl(var(--card))_7%,transparent_10%,transparent_12%,hsl(var(--card))_16%)]
+            [--aurora:repeating-linear-gradient(100deg,hsl(var(--primary))_10%,hsl(var(--primary-glow))_15%,hsl(var(--accent))_20%,hsl(var(--primary-glow))_25%,hsl(var(--primary))_30%)]
             [background-image:var(--white-gradient),var(--aurora)]
             dark:[background-image:var(--dark-gradient),var(--aurora)]
             [background-size:300%,_200%]
@@ -37,9 +37,9 @@ export const AuroraBackground = ({
             after:[background-size:200%,_100%] 
             after:animate-aurora after:[background-attachment:fixed] after:mix-blend-difference
             pointer-events-none
-            absolute -inset-[10px] opacity-50 will-change-transform`,
+            absolute -inset-[10px] opacity-60 will-change-transform`,
             showRadialGradient &&
-              `[mask-image:radial-gradient(ellipse_at_100%_0%,black_10%,var(--transparent)_70%)]`
+              `[mask-image:radial-gradient(ellipse_at_100%_0%,black_10%,transparent_70%)]`
           )}
         ></div>
       </div>
