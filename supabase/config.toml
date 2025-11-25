@@ -1,1 +1,4 @@
 project_id = "cnnewzmpvtgugohneugn"
+
+[functions.generate-newsletter]
+verify_jwt = true

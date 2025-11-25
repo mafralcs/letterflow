@@ -17,6 +17,7 @@ export type Database = {
       newsletters: {
         Row: {
           created_at: string
+          error_message: string | null
           html_content: string | null
           id: string
           links_raw: string | null
@@ -30,6 +31,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          error_message?: string | null
           html_content?: string | null
           id?: string
           links_raw?: string | null
@@ -43,6 +45,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          error_message?: string | null
           html_content?: string | null
           id?: string
           links_raw?: string | null
