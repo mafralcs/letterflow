@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, FileText, Code, Edit } from "lucide-react";
+import { ArrowLeft, FileText, Code, Edit, Copy } from "lucide-react";
 
 interface Newsletter {
   id: string;
@@ -94,6 +94,24 @@ export default function NewsletterView() {
       navigate(`/projects/${projectId}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const copyHtmlToClipboard = async () => {
+    if (!newsletter?.html_content) return;
+    
+    try {
+      await navigator.clipboard.writeText(newsletter.html_content);
+      toast({
+        title: "HTML copiado!",
+        description: "O código HTML foi copiado para a área de transferência.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o HTML.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -223,8 +241,19 @@ export default function NewsletterView() {
 
             <TabsContent value="html" className="mt-6">
               <Card className="shadow-lg-custom">
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                   <CardTitle>Código HTML</CardTitle>
+                  {newsletter.html_content && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={copyHtmlToClipboard}
+                      className="gap-2"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copiar HTML
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent>
                   {newsletter.html_content ? (
