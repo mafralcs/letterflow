@@ -6,7 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, FileText, Code, Edit, Copy } from "lucide-react";
+import { ArrowLeft, FileText, Code, Edit, Copy, RefreshCw, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Newsletter {
   id: string;
@@ -26,6 +37,8 @@ export default function NewsletterView() {
 
   const [newsletter, setNewsletter] = useState<Newsletter | null>(null);
   const [loading, setLoading] = useState(true);
+  const [regenerating, setRegenerating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadNewsletter();
@@ -115,6 +128,83 @@ export default function NewsletterView() {
     }
   };
 
+  const handleRegenerate = async () => {
+    if (!newsletterId) return;
+    
+    setRegenerating(true);
+
+    try {
+      // Update status to generating
+      const { error: updateError } = await supabase
+        .from("newsletters")
+        .update({ 
+          status: "generating",
+          error_message: null
+        })
+        .eq("id", newsletterId);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      setNewsletter(prev => prev ? { ...prev, status: "generating" } : null);
+
+      // Call edge function
+      const { error: functionError } = await supabase.functions.invoke(
+        "generate-newsletter",
+        {
+          body: { newsletterId },
+        }
+      );
+
+      if (functionError) throw functionError;
+
+      toast({
+        title: "Regenerando newsletter",
+        description: "Sua newsletter está sendo gerada novamente.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao regenerar",
+        description: error.message,
+        variant: "destructive",
+      });
+      // Reload newsletter to get the actual state
+      loadNewsletter();
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!newsletterId) return;
+    
+    setDeleting(true);
+
+    try {
+      const { error } = await supabase
+        .from("newsletters")
+        .delete()
+        .eq("id", newsletterId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Newsletter excluída!",
+        description: "A newsletter foi removida com sucesso.",
+      });
+
+      navigate(`/projects/${projectId}`);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const statusLabels: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
     draft: { label: "Rascunho", variant: "outline" },
     generating: { label: "Gerando", variant: "secondary" },
@@ -156,17 +246,57 @@ export default function NewsletterView() {
                 Criada em {new Date(newsletter.created_at).toLocaleDateString("pt-BR")}
               </p>
             </div>
-            <div className="flex gap-2 items-start">
+            <div className="flex gap-2 items-start flex-wrap">
               <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
               {newsletter.status !== "generating" && (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(`/projects/${projectId}/newsletters/${newsletterId}/edit`)}
-                  className="gap-2"
-                >
-                  <Edit className="h-4 w-4" />
-                  Editar
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(`/projects/${projectId}/newsletters/${newsletterId}/edit`)}
+                    className="gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleRegenerate}
+                    disabled={regenerating}
+                    className="gap-2"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${regenerating ? 'animate-spin' : ''}`} />
+                    Regenerar
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        disabled={deleting}
+                        className="gap-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Excluir
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação não poderá ser desfeita. A newsletter será excluída permanentemente.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Sim, excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
               )}
             </div>
           </div>
