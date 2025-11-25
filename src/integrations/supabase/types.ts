@@ -100,7 +100,9 @@ export type Database = {
           author_name: string
           created_at: string
           description: string | null
+          design_guidelines: string | null
           frequency: string
+          html_template: string | null
           id: string
           language: string
           name: string
@@ -114,7 +116,9 @@ export type Database = {
           author_name: string
           created_at?: string
           description?: string | null
+          design_guidelines?: string | null
           frequency?: string
+          html_template?: string | null
           id?: string
           language?: string
           name: string
@@ -128,7 +132,9 @@ export type Database = {
           author_name?: string
           created_at?: string
           description?: string | null
+          design_guidelines?: string | null
           frequency?: string
+          html_template?: string | null
           id?: string
           language?: string
           name?: string

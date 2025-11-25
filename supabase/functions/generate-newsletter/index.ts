@@ -54,13 +54,27 @@ Configurações do projeto:
 - Nome do autor: ${project.author_name}
 - Bio do autor: ${project.author_bio || ''}
 
+${project.design_guidelines ? `DIRETRIZES DE DESIGN VISUAL (SIGA RIGOROSAMENTE):
+${project.design_guidelines}
+
+IMPORTANTE: Todas as newsletters deste projeto DEVEM seguir EXATAMENTE estas diretrizes visuais para manter consistência. 
+Use as cores, fontes, espaçamentos e elementos especificados acima em TODAS as newsletters geradas.` : ''}
+
+${project.html_template ? `TEMPLATE HTML DE REFERÊNCIA:
+Use o seguinte template HTML como base visual e estrutural para a newsletter:
+
+${project.html_template}
+
+IMPORTANTE: Mantenha o mesmo estilo visual, estrutura de layout e elementos do template acima.` : ''}
+
 IMPORTANTE:
 1. Crie uma newsletter bem formatada e organizada
 2. Inclua um resumo ou comentário sobre cada link fornecido
 3. Mantenha o tom de voz especificado
 4. Siga a estrutura definida pelo projeto
 5. Para o HTML, use formatação apropriada para emails (inline styles, tabelas para layout)
-6. Para o texto, mantenha uma formatação limpa e legível`;
+6. Para o texto, mantenha uma formatação limpa e legível
+${project.design_guidelines ? '7. SIGA FIELMENTE as diretrizes de design visual especificadas para garantir CONSISTÊNCIA entre todas as newsletters' : ''}`;
 
     const userPrompt = `Crie uma newsletter com base nos seguintes links:
 
