@@ -189,7 +189,7 @@ export default function ProjectForm() {
                 <Label htmlFor="name">Nome do Projeto *</Label>
                 <Input
                   id="name"
-                  placeholder="Ex: Tuti – Mercado de Madeira"
+                  placeholder="Ex: Lumber Report"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
@@ -248,7 +248,7 @@ export default function ProjectForm() {
                 <Label htmlFor="author_name">Nome do Autor *</Label>
                 <Input
                   id="author_name"
-                  placeholder="Ex: Tuti"
+                  placeholder="Ex: Gustavo Garcia"
                   value={formData.author_name}
                   onChange={(e) => setFormData({ ...formData, author_name: e.target.value })}
                   required
@@ -259,7 +259,7 @@ export default function ProjectForm() {
                 <Label htmlFor="author_bio">Bio/Descrição do Autor</Label>
                 <Textarea
                   id="author_bio"
-                  placeholder="Ex: Analista do mercado global de madeira"
+                  placeholder="Ex: Analista do mercado global de Counter Strike 2"
                   value={formData.author_bio}
                   onChange={(e) => setFormData({ ...formData, author_bio: e.target.value })}
                   rows={2}
