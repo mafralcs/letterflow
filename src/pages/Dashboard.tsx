@@ -118,7 +118,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gradient-subtle">
       <header className="border-b bg-card/80 backdrop-blur sticky top-0 z-10 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <img src={logo} alt="LetterFlow" className="h-15 w-auto" />
+          <img src={logo} alt="LetterFlow" className="h-8 w-auto" />
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {user?.email}
