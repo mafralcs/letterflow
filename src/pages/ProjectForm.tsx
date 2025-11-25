@@ -38,6 +38,8 @@ export default function ProjectForm() {
     author_bio: "",
     tone: "",
     structure: "",
+    design_guidelines: "",
+    html_template: "",
   });
 
   useEffect(() => {
@@ -67,6 +69,8 @@ export default function ProjectForm() {
         author_bio: data.author_bio || "",
         tone: data.tone || "",
         structure: data.structure || "",
+        design_guidelines: data.design_guidelines || "",
+        html_template: data.html_template || "",
       });
     } catch (error: any) {
       toast({
@@ -286,6 +290,35 @@ export default function ProjectForm() {
                   onChange={(e) => setFormData({ ...formData, structure: e.target.value })}
                   rows={4}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="design_guidelines">Diretrizes de Design Visual</Label>
+                <Textarea
+                  id="design_guidelines"
+                  placeholder="Ex: Cores: azul marinho (#1a365d) e laranja (#ff6b35). Fonte: sans-serif moderna. Layout: cabeçalho com logo, seções com títulos em destaque, espaçamento generoso. Inclua botões com cantos arredondados."
+                  value={formData.design_guidelines}
+                  onChange={(e) => setFormData({ ...formData, design_guidelines: e.target.value })}
+                  rows={4}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Descreva cores, fontes, espaçamentos e elementos visuais que devem aparecer em todas as newsletters deste projeto. Isso garante consistência visual.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="html_template">Template HTML de Referência (Opcional)</Label>
+                <Textarea
+                  id="html_template"
+                  placeholder="Cole aqui um HTML de referência que você gostaria que a IA use como base visual..."
+                  value={formData.html_template}
+                  onChange={(e) => setFormData({ ...formData, html_template: e.target.value })}
+                  rows={6}
+                  className="font-mono text-xs"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Se você tem um template HTML específico, cole aqui. A IA irá usar como referência para manter o mesmo design.
+                </p>
               </div>
 
               <div className="flex gap-3">
