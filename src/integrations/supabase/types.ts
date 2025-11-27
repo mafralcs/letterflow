@@ -96,6 +96,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          ai_provider: string
           author_bio: string | null
           author_name: string
           created_at: string
@@ -112,8 +113,10 @@ export type Database = {
           tone: string | null
           updated_at: string
           user_id: string
+          webhook_url: string | null
         }
         Insert: {
+          ai_provider?: string
           author_bio?: string | null
           author_name: string
           created_at?: string
@@ -130,8 +133,10 @@ export type Database = {
           tone?: string | null
           updated_at?: string
           user_id: string
+          webhook_url?: string | null
         }
         Update: {
+          ai_provider?: string
           author_bio?: string | null
           author_name?: string
           created_at?: string
@@ -148,6 +153,7 @@ export type Database = {
           tone?: string | null
           updated_at?: string
           user_id?: string
+          webhook_url?: string | null
         }
         Relationships: []
       }

@@ -43,6 +43,107 @@ serve(async (req) => {
     const links = newsletter.links_raw?.split('\n').filter((l: string) => l.trim()) || [];
     const notes = newsletter.notes || '';
 
+    // Check if project uses webhook
+    if (project.ai_provider === 'webhook' && project.webhook_url) {
+      console.log('Using external webhook:', project.webhook_url);
+
+      try {
+        // Prepare payload for webhook
+        const webhookPayload = {
+          newsletter_id: newsletterId,
+          newsletter_title: newsletter.title,
+          links,
+          notes,
+          project: {
+            name: project.name,
+            author_name: project.author_name,
+            author_bio: project.author_bio,
+            tone: project.tone,
+            structure: project.structure,
+            language: project.language,
+            newsletter_type: project.newsletter_type,
+            logo_url: project.logo_url,
+            design_guidelines: project.design_guidelines,
+            html_template: project.html_template,
+          }
+        };
+
+        // Call external webhook with timeout
+        const webhookResponse = await fetch(project.webhook_url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(webhookPayload),
+          signal: AbortSignal.timeout(60000), // 60 second timeout
+        });
+
+        if (!webhookResponse.ok) {
+          throw new Error(`Webhook retornou erro: ${webhookResponse.status}`);
+        }
+
+        const webhookData = await webhookResponse.json();
+
+        // Validate response format
+        if (!webhookData.html_content || !webhookData.text_content) {
+          throw new Error('Webhook não retornou html_content e text_content');
+        }
+
+        console.log('Webhook response received successfully');
+
+        // Update newsletter with webhook content
+        const { error: updateError } = await supabase
+          .from('newsletters')
+          .update({
+            html_content: webhookData.html_content,
+            text_content: webhookData.text_content,
+            status: 'final',
+            error_message: null
+          })
+          .eq('id', newsletterId);
+
+        if (updateError) throw updateError;
+
+        console.log('Newsletter generated successfully via webhook!');
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'Newsletter gerada com sucesso via webhook!' 
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200
+          }
+        );
+
+      } catch (webhookError) {
+        console.error('Webhook error:', webhookError);
+        
+        // Update newsletter status to error
+        await supabase
+          .from('newsletters')
+          .update({
+            status: 'error',
+            error_message: `Erro no webhook: ${webhookError instanceof Error ? webhookError.message : 'Erro desconhecido'}`
+          })
+          .eq('id', newsletterId);
+
+        return new Response(
+          JSON.stringify({ 
+            error: `Erro no webhook: ${webhookError instanceof Error ? webhookError.message : 'Erro desconhecido'}` 
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500
+          }
+        );
+      }
+    }
+
+    // Use internal Lovable AI if no webhook configured
+    console.log('Using internal Lovable AI');
+
     // Determine newsletter style based on type
     const isInstitutional = project.newsletter_type === 'institutional';
     const newsletterStyle = isInstitutional
@@ -50,7 +151,7 @@ serve(async (req) => {
       : 'Newsletter PESSOAL: Foco no autor e sua perspectiva. Tom conversacional e próximo. Assinatura pessoal no final. Estilo de curadoria individual.';
 
     // Build the prompt for AI
-    const systemPrompt = `Você é um assistente especializado em criar newsletters profissionais. 
+    const systemPrompt = `Você é um assistente especializado em criar newsletters profissionais.
 Sua tarefa é analisar os links fornecidos e criar uma newsletter completa em dois formatos: HTML e texto puro.
 
 TIPO DE NEWSLETTER: ${newsletterStyle}
