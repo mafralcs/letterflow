@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import AccountSettings from "./pages/AccountSettings";
 import ProjectForm from "./pages/ProjectForm";
 import ProjectDetail from "./pages/ProjectDetail";
+import ProjectSpreadsheet from "./pages/ProjectSpreadsheet";
 import NewsletterForm from "./pages/NewsletterForm";
 import NewsletterView from "./pages/NewsletterView";
 import NotFound from "./pages/NotFound";
@@ -29,6 +30,8 @@ const App = () => (
           <Route path="/projects/new" element={<ProjectForm />} />
           <Route path="/projects/:id/edit" element={<ProjectForm />} />
           <Route path="/projects/:id" element={<ProjectDetail />} />
+          <Route path="/projects/:projectId/spreadsheets/new" element={<ProjectSpreadsheet />} />
+          <Route path="/projects/:projectId/spreadsheets/:spreadsheetId" element={<ProjectSpreadsheet />} />
           <Route path="/projects/:projectId/newsletters/new" element={<NewsletterForm />} />
           <Route path="/projects/:projectId/newsletters/:newsletterId/edit" element={<NewsletterForm />} />
           <Route path="/projects/:projectId/newsletters/:newsletterId" element={<NewsletterView />} />
