@@ -4,8 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Settings, FileText, Calendar } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Plus, Settings, FileText, Calendar, Database, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { SpreadsheetCard } from "@/components/SpreadsheetCard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Project {
   id: string;
@@ -24,6 +36,13 @@ interface Newsletter {
   links_raw: string | null;
 }
 
+interface Spreadsheet {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+}
+
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -31,7 +50,9 @@ export default function ProjectDetail() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [newsletters, setNewsletters] = useState<Newsletter[]>([]);
+  const [spreadsheets, setSpreadsheets] = useState<Spreadsheet[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteSpreadsheetId, setDeleteSpreadsheetId] = useState<string | null>(null);
 
   useEffect(() => {
     loadProjectData();
@@ -41,10 +62,15 @@ export default function ProjectDetail() {
     if (!id) return;
 
     try {
-      const [projectResult, newslettersResult] = await Promise.all([
+      const [projectResult, newslettersResult, spreadsheetsResult] = await Promise.all([
         supabase.from("projects").select("*").eq("id", id).single(),
         supabase
           .from("newsletters")
+          .select("*")
+          .eq("project_id", id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("project_spreadsheets")
           .select("*")
           .eq("project_id", id)
           .order("created_at", { ascending: false }),
@@ -52,9 +78,11 @@ export default function ProjectDetail() {
 
       if (projectResult.error) throw projectResult.error;
       if (newslettersResult.error) throw newslettersResult.error;
+      if (spreadsheetsResult.error) throw spreadsheetsResult.error;
 
       setProject(projectResult.data);
       setNewsletters(newslettersResult.data || []);
+      setSpreadsheets(spreadsheetsResult.data || []);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar dados",
@@ -64,6 +92,33 @@ export default function ProjectDetail() {
       navigate("/dashboard");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteSpreadsheet = async () => {
+    if (!deleteSpreadsheetId) return;
+
+    try {
+      const { error } = await supabase
+        .from("project_spreadsheets")
+        .delete()
+        .eq("id", deleteSpreadsheetId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Planilha excluída",
+        description: "A planilha foi excluída com sucesso.",
+      });
+
+      setSpreadsheets(spreadsheets.filter(s => s.id !== deleteSpreadsheetId));
+      setDeleteSpreadsheetId(null);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir planilha",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -148,58 +203,124 @@ export default function ProjectDetail() {
           </div>
         </div>
 
-        {newsletters.length === 0 ? (
-          <Card className="shadow-card">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Nenhuma newsletter ainda</h3>
-              <p className="text-muted-foreground mb-6 text-center max-w-md">
-                Nenhuma newsletter criada ainda para este projeto. Clique em "Nova Newsletter" para gerar a primeira.
-              </p>
-              <Button onClick={() => navigate(`/projects/${id}/newsletters/new`)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Criar primeira newsletter
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {newsletters.map((newsletter) => {
-              const linkCount = newsletter.links_raw
-                ? newsletter.links_raw.split("\n").filter((l) => l.trim()).length
-                : 0;
-              const statusInfo = statusLabels[newsletter.status] || statusLabels.draft;
+        <Tabs defaultValue="newsletters" className="mt-8">
+          <TabsList>
+            <TabsTrigger value="newsletters">Newsletters</TabsTrigger>
+            <TabsTrigger value="database">Banco de Dados</TabsTrigger>
+          </TabsList>
 
-              return (
-                <Card
-                  key={newsletter.id}
-                  className="hover:shadow-lg-custom transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/projects/${id}/newsletters/${newsletter.id}`)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="truncate">{newsletter.title}</CardTitle>
-                        <CardDescription>
-                          Criada em {new Date(newsletter.created_at).toLocaleDateString("pt-BR")}
-                        </CardDescription>
-                      </div>
-                      <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
-                    </div>
-                  </CardHeader>
-                  {linkCount > 0 && (
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">
-                        {linkCount} {linkCount === 1 ? "link" : "links"}
-                      </p>
-                    </CardContent>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-        )}
+          <TabsContent value="newsletters" className="mt-6">
+            {newsletters.length === 0 ? (
+              <Card className="shadow-card">
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Nenhuma newsletter ainda</h3>
+                  <p className="text-muted-foreground mb-6 text-center max-w-md">
+                    Nenhuma newsletter criada ainda para este projeto. Clique em "Nova Newsletter" para gerar a primeira.
+                  </p>
+                  <Button onClick={() => navigate(`/projects/${id}/newsletters/new`)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Criar primeira newsletter
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {newsletters.map((newsletter) => {
+                  const linkCount = newsletter.links_raw
+                    ? newsletter.links_raw.split("\n").filter((l) => l.trim()).length
+                    : 0;
+                  const statusInfo = statusLabels[newsletter.status] || statusLabels.draft;
+
+                  return (
+                    <Card
+                      key={newsletter.id}
+                      className="hover:shadow-lg-custom transition-shadow cursor-pointer"
+                      onClick={() => navigate(`/projects/${id}/newsletters/${newsletter.id}`)}
+                    >
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="truncate">{newsletter.title}</CardTitle>
+                            <CardDescription>
+                              Criada em {new Date(newsletter.created_at).toLocaleDateString("pt-BR")}
+                            </CardDescription>
+                          </div>
+                          <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+                        </div>
+                      </CardHeader>
+                      {linkCount > 0 && (
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground">
+                            {linkCount} {linkCount === 1 ? "link" : "links"}
+                          </p>
+                        </CardContent>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="database" className="mt-6">
+            <div className="mb-6">
+              <Button onClick={() => navigate(`/projects/${id}/spreadsheets/new`)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Nova Planilha
+              </Button>
+            </div>
+
+            {spreadsheets.length === 0 ? (
+              <Card className="shadow-card">
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <Database className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Nenhuma planilha ainda</h3>
+                  <p className="text-muted-foreground mb-6 text-center max-w-md">
+                    Crie planilhas com dados estruturados que serão incluídos automaticamente na geração das newsletters.
+                  </p>
+                  <Button onClick={() => navigate(`/projects/${id}/spreadsheets/new`)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Criar primeira planilha
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {spreadsheets.map((spreadsheet) => (
+                  <SpreadsheetCard
+                    key={spreadsheet.id}
+                    id={spreadsheet.id}
+                    projectId={id!}
+                    name={spreadsheet.name}
+                    description={spreadsheet.description || undefined}
+                    columnCount={0}
+                    rowCount={0}
+                    onDelete={() => setDeleteSpreadsheetId(spreadsheet.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
+
+      <AlertDialog open={!!deleteSpreadsheetId} onOpenChange={(open) => !open && setDeleteSpreadsheetId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta planilha? Essa ação não poderá ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSpreadsheet} className="bg-destructive text-destructive-foreground">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -94,6 +94,44 @@ export type Database = {
         }
         Relationships: []
       }
+      project_spreadsheets: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          project_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          project_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_spreadsheets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           ai_provider: string
@@ -156,6 +194,76 @@ export type Database = {
           webhook_url?: string | null
         }
         Relationships: []
+      }
+      spreadsheet_columns: {
+        Row: {
+          column_order: number
+          column_type: string
+          created_at: string
+          id: string
+          name: string
+          spreadsheet_id: string
+        }
+        Insert: {
+          column_order: number
+          column_type: string
+          created_at?: string
+          id?: string
+          name: string
+          spreadsheet_id: string
+        }
+        Update: {
+          column_order?: number
+          column_type?: string
+          created_at?: string
+          id?: string
+          name?: string
+          spreadsheet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spreadsheet_columns_spreadsheet_id_fkey"
+            columns: ["spreadsheet_id"]
+            isOneToOne: false
+            referencedRelation: "project_spreadsheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spreadsheet_rows: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          row_order: number
+          spreadsheet_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          row_order: number
+          spreadsheet_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          row_order?: number
+          spreadsheet_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spreadsheet_rows_spreadsheet_id_fkey"
+            columns: ["spreadsheet_id"]
+            isOneToOne: false
+            referencedRelation: "project_spreadsheets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

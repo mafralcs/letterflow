@@ -43,6 +43,46 @@ serve(async (req) => {
     const links = newsletter.links_raw?.split('\n').filter((l: string) => l.trim()) || [];
     const notes = newsletter.notes || '';
 
+    // Fetch project spreadsheets data
+    console.log('Fetching project spreadsheets...');
+    const { data: spreadsheets, error: spreadsheetsError } = await supabase
+      .from('project_spreadsheets')
+      .select('id, name, description')
+      .eq('project_id', project.id);
+
+    if (spreadsheetsError) {
+      console.error('Error fetching spreadsheets:', spreadsheetsError);
+    }
+
+    const projectData = [];
+    if (spreadsheets && spreadsheets.length > 0) {
+      for (const spreadsheet of spreadsheets) {
+        // Fetch columns
+        const { data: columns } = await supabase
+          .from('spreadsheet_columns')
+          .select('name, column_type')
+          .eq('spreadsheet_id', spreadsheet.id)
+          .order('column_order');
+
+        // Fetch rows
+        const { data: rows } = await supabase
+          .from('spreadsheet_rows')
+          .select('data')
+          .eq('spreadsheet_id', spreadsheet.id)
+          .order('row_order');
+
+        if (columns && rows) {
+          projectData.push({
+            spreadsheet_name: spreadsheet.name,
+            description: spreadsheet.description,
+            columns: columns.map(c => c.name),
+            rows: rows.map(r => r.data)
+          });
+        }
+      }
+      console.log(`Loaded ${projectData.length} spreadsheets with data`);
+    }
+
     // Check if project uses webhook
     if (project.ai_provider === 'webhook' && project.webhook_url) {
       console.log('Using external webhook:', project.webhook_url);
@@ -65,7 +105,8 @@ serve(async (req) => {
             logo_url: project.logo_url,
             design_guidelines: project.design_guidelines,
             html_template: project.html_template,
-          }
+          },
+          project_data: projectData
         };
 
         // Call external webhook with timeout
@@ -162,6 +203,23 @@ Configurações do projeto:
 - Idioma: ${project.language || 'pt-BR'}
 - Nome do autor: ${project.author_name}
 - Bio do autor: ${project.author_bio || ''}
+
+${projectData.length > 0 ? `DADOS DO PROJETO:
+O projeto possui os seguintes dados estruturados que DEVEM ser considerados na geração da newsletter quando relevante:
+
+${projectData.map(sheet => `
+[Planilha: ${sheet.spreadsheet_name}]
+${sheet.description ? `Descrição: ${sheet.description}` : ''}
+Colunas: ${sheet.columns.join(', ')}
+Dados (${sheet.rows.length} linhas):
+${sheet.rows.map((row: any) => 
+  sheet.columns.map(col => `${col}: ${row[col] || 'N/A'}`).join(' | ')
+).slice(0, 10).join('\n')}
+${sheet.rows.length > 10 ? `... e mais ${sheet.rows.length - 10} linhas` : ''}
+`).join('\n')}
+
+IMPORTANTE: Use esses dados estruturados para enriquecer o conteúdo da newsletter sempre que fizer sentido contextualmente.
+` : ''}
 
 ${project.logo_url && isInstitutional ? `LOGO DA EMPRESA:
 URL do logo: ${project.logo_url}
