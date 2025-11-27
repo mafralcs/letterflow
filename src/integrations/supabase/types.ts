@@ -105,7 +105,9 @@ export type Database = {
           html_template: string | null
           id: string
           language: string
+          logo_url: string | null
           name: string
+          newsletter_type: string
           structure: string | null
           tone: string | null
           updated_at: string
@@ -121,7 +123,9 @@ export type Database = {
           html_template?: string | null
           id?: string
           language?: string
+          logo_url?: string | null
           name: string
+          newsletter_type?: string
           structure?: string | null
           tone?: string | null
           updated_at?: string
@@ -137,7 +141,9 @@ export type Database = {
           html_template?: string | null
           id?: string
           language?: string
+          logo_url?: string | null
           name?: string
+          newsletter_type?: string
           structure?: string | null
           tone?: string | null
           updated_at?: string
