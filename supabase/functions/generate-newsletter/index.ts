@@ -43,9 +43,17 @@ serve(async (req) => {
     const links = newsletter.links_raw?.split('\n').filter((l: string) => l.trim()) || [];
     const notes = newsletter.notes || '';
 
+    // Determine newsletter style based on type
+    const isInstitutional = project.newsletter_type === 'institutional';
+    const newsletterStyle = isInstitutional
+      ? 'Newsletter INSTITUCIONAL: Use linguagem corporativa e profissional. Tom formal e neutro. Foco na organização, não em um autor individual.'
+      : 'Newsletter PESSOAL: Foco no autor e sua perspectiva. Tom conversacional e próximo. Assinatura pessoal no final. Estilo de curadoria individual.';
+
     // Build the prompt for AI
     const systemPrompt = `Você é um assistente especializado em criar newsletters profissionais. 
 Sua tarefa é analisar os links fornecidos e criar uma newsletter completa em dois formatos: HTML e texto puro.
+
+TIPO DE NEWSLETTER: ${newsletterStyle}
 
 Configurações do projeto:
 - Tom de voz: ${project.tone || 'profissional e informativo'}
@@ -53,6 +61,10 @@ Configurações do projeto:
 - Idioma: ${project.language || 'pt-BR'}
 - Nome do autor: ${project.author_name}
 - Bio do autor: ${project.author_bio || ''}
+
+${project.logo_url && isInstitutional ? `LOGO DA EMPRESA:
+URL do logo: ${project.logo_url}
+IMPORTANTE: Para newsletters institucionais, inclua o logo no cabeçalho do HTML usando esta URL. Use uma tag <img> com estilos inline apropriados para emails.` : ''}
 
 ${project.design_guidelines ? `DIRETRIZES DE DESIGN VISUAL (SIGA RIGOROSAMENTE):
 ${project.design_guidelines}
@@ -74,7 +86,8 @@ IMPORTANTE:
 4. Siga a estrutura definida pelo projeto
 5. Para o HTML, use formatação apropriada para emails (inline styles, tabelas para layout)
 6. Para o texto, mantenha uma formatação limpa e legível
-${project.design_guidelines ? '7. SIGA FIELMENTE as diretrizes de design visual especificadas para garantir CONSISTÊNCIA entre todas as newsletters' : ''}`;
+${project.design_guidelines ? '7. SIGA FIELMENTE as diretrizes de design visual especificadas para garantir CONSISTÊNCIA entre todas as newsletters' : ''}
+${isInstitutional ? '8. Para newsletters INSTITUCIONAIS: use linguagem corporativa, inclua o logo no cabeçalho, rodapé com informações da organização' : '8. Para newsletters PESSOAIS: foque no autor, use tom conversacional, inclua assinatura pessoal'}`;
 
     const userPrompt = `Crie uma newsletter com base nos seguintes links:
 

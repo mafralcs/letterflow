@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Trash2, Upload, X } from "lucide-react";
 
 export default function ProjectForm() {
   const { id } = useParams();
@@ -29,6 +29,8 @@ export default function ProjectForm() {
 
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -40,6 +42,8 @@ export default function ProjectForm() {
     structure: "",
     design_guidelines: "",
     html_template: "",
+    logo_url: "",
+    newsletter_type: "personal",
   });
 
   useEffect(() => {
@@ -71,7 +75,13 @@ export default function ProjectForm() {
         structure: data.structure || "",
         design_guidelines: data.design_guidelines || "",
         html_template: data.html_template || "",
+        logo_url: data.logo_url || "",
+        newsletter_type: data.newsletter_type || "personal",
       });
+      
+      if (data.logo_url) {
+        setLogoPreview(data.logo_url);
+      }
     } catch (error: any) {
       toast({
         title: "Erro ao carregar projeto",
@@ -127,6 +137,104 @@ export default function ProjectForm() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Arquivo inválido",
+        description: "Por favor, selecione uma imagem (PNG, JPG, SVG)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Arquivo muito grande",
+        description: "O logo deve ter no máximo 2MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      // Create a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('project-logos')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('project-logos')
+        .getPublicUrl(fileName);
+
+      setFormData({ ...formData, logo_url: publicUrl });
+      setLogoPreview(publicUrl);
+
+      toast({
+        title: "Logo carregado!",
+        description: "O logo foi enviado com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao fazer upload",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!formData.logo_url) return;
+
+    try {
+      // Extract filename from URL
+      const urlParts = formData.logo_url.split('/');
+      const fileName = urlParts.slice(-2).join('/'); // user_id/timestamp.ext
+
+      // Delete from storage
+      const { error } = await supabase.storage
+        .from('project-logos')
+        .remove([fileName]);
+
+      if (error) throw error;
+
+      setFormData({ ...formData, logo_url: "" });
+      setLogoPreview(null);
+
+      toast({
+        title: "Logo removido",
+        description: "O logo foi removido com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao remover logo",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -268,6 +376,79 @@ export default function ProjectForm() {
                   onChange={(e) => setFormData({ ...formData, author_bio: e.target.value })}
                   rows={2}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="newsletter_type">Tipo de Newsletter *</Label>
+                <Select
+                  value={formData.newsletter_type}
+                  onValueChange={(value) => setFormData({ ...formData, newsletter_type: value })}
+                >
+                  <SelectTrigger id="newsletter_type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="personal">Pessoal (autor individual)</SelectItem>
+                    <SelectItem value="institutional">Institucional (empresa/organização)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Newsletter pessoal tem foco no autor e tom mais próximo. Newsletter institucional usa linguagem corporativa e logo da empresa.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="logo">Logo da Empresa (Opcional)</Label>
+                <div className="flex flex-col gap-3">
+                  {logoPreview ? (
+                    <div className="relative w-full max-w-xs">
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="w-full h-32 object-contain border rounded-md bg-muted p-2"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8"
+                        onClick={handleRemoveLogo}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed rounded-md p-6 text-center">
+                      <Upload className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+                      <Label
+                        htmlFor="logo-upload"
+                        className="cursor-pointer text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        Clique para fazer upload ou arraste uma imagem
+                      </Label>
+                      <Input
+                        id="logo-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleLogoUpload}
+                        disabled={uploading}
+                      />
+                      <p className="text-xs text-muted-foreground mt-2">
+                        PNG, JPG ou SVG. Máximo 2MB.
+                      </p>
+                    </div>
+                  )}
+                  {uploading && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Fazendo upload...
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Recomendado para newsletters institucionais. O logo aparecerá no cabeçalho da newsletter.
+                </p>
               </div>
 
               <div className="space-y-2">
