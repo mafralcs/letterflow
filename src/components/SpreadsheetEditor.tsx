@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { ColumnHeader } from "./ColumnHeader";
 import { SpreadsheetCell } from "./SpreadsheetCell";
+import { SpreadsheetImport } from "./SpreadsheetImport";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -204,6 +205,10 @@ export const SpreadsheetEditor = ({ spreadsheetId }: SpreadsheetEditorProps) => 
           <Plus className="h-4 w-4 mr-2" />
           Adicionar Linha
         </Button>
+        <SpreadsheetImport 
+          spreadsheetId={spreadsheetId} 
+          onImportComplete={loadSpreadsheetData}
+        />
       </div>
 
       <div className="border rounded-lg overflow-auto">
