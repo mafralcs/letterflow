@@ -44,6 +44,8 @@ export default function ProjectForm() {
     html_template: "",
     logo_url: "",
     newsletter_type: "personal",
+    ai_provider: "internal",
+    webhook_url: "",
   });
 
   useEffect(() => {
@@ -77,6 +79,8 @@ export default function ProjectForm() {
         html_template: data.html_template || "",
         logo_url: data.logo_url || "",
         newsletter_type: data.newsletter_type || "personal",
+        ai_provider: data.ai_provider || "internal",
+        webhook_url: data.webhook_url || "",
       });
       
       if (data.logo_url) {
@@ -501,6 +505,61 @@ export default function ProjectForm() {
                   Se você tem um template HTML específico, cole aqui. A IA irá usar como referência para manter o mesmo design.
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ai_provider">Provedor de IA *</Label>
+                <Select
+                  value={formData.ai_provider}
+                  onValueChange={(value) => setFormData({ ...formData, ai_provider: value })}
+                >
+                  <SelectTrigger id="ai_provider">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="internal">IA Interna (Lovable)</SelectItem>
+                    <SelectItem value="webhook">Webhook Externo</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Escolha entre usar a IA integrada do LetterFlow ou enviar os dados para um endpoint customizado (ex: n8n, agente personalizado).
+                </p>
+              </div>
+
+              {formData.ai_provider === "webhook" && (
+                <div className="space-y-2">
+                  <Label htmlFor="webhook_url">URL do Webhook *</Label>
+                  <Input
+                    id="webhook_url"
+                    type="url"
+                    placeholder="https://n8n.meusite.com/webhook/xyz"
+                    value={formData.webhook_url}
+                    onChange={(e) => setFormData({ ...formData, webhook_url: e.target.value })}
+                    required={formData.ai_provider === "webhook"}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Endpoint que receberá os dados da newsletter e deve retornar o conteúdo em HTML e texto puro.
+                  </p>
+                  <div className="bg-muted p-3 rounded-md text-xs space-y-2">
+                    <p className="font-semibold">Formato esperado do payload enviado:</p>
+                    <pre className="font-mono bg-background p-2 rounded overflow-x-auto">
+{`{
+  "newsletter_id": "uuid",
+  "newsletter_title": "string",
+  "links": ["url1", "url2"],
+  "notes": "string",
+  "project": { /* configurações */ }
+}`}
+                    </pre>
+                    <p className="font-semibold mt-2">Resposta esperada do webhook:</p>
+                    <pre className="font-mono bg-background p-2 rounded overflow-x-auto">
+{`{
+  "html_content": "string",
+  "text_content": "string"
+}`}
+                    </pre>
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <Button
