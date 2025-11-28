@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, FileText, Code, Edit, Copy, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Code, Edit, Copy, RefreshCw, Trash2, StopCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +39,7 @@ export default function NewsletterView() {
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     loadNewsletter();
@@ -175,6 +176,39 @@ export default function NewsletterView() {
     }
   };
 
+  const handleCancelGeneration = async () => {
+    if (!newsletterId) return;
+    
+    setCancelling(true);
+    
+    try {
+      const { error } = await supabase
+        .from("newsletters")
+        .update({ 
+          status: "draft",
+          error_message: "Geração cancelada pelo usuário"
+        })
+        .eq("id", newsletterId);
+
+      if (error) throw error;
+
+      setNewsletter(prev => prev ? { ...prev, status: "draft" } : null);
+
+      toast({
+        title: "Geração cancelada",
+        description: "A geração da newsletter foi interrompida.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao cancelar",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!newsletterId) return;
     
@@ -307,9 +341,18 @@ export default function NewsletterView() {
             <CardContent className="flex flex-col items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
               <h3 className="text-xl font-semibold mb-2">Gerando sua newsletter...</h3>
-              <p className="text-muted-foreground text-center max-w-md">
+              <p className="text-muted-foreground text-center max-w-md mb-6">
                 Estamos processando seus links e criando a newsletter. Isso pode levar alguns minutos.
               </p>
+              <Button
+                variant="outline"
+                onClick={handleCancelGeneration}
+                disabled={cancelling}
+                className="gap-2"
+              >
+                <StopCircle className="h-4 w-4" />
+                {cancelling ? "Cancelando..." : "Parar Geração"}
+              </Button>
             </CardContent>
           </Card>
         ) : newsletter.status === "error" ? (

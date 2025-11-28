@@ -132,6 +132,27 @@ serve(async (req) => {
 
         console.log('Webhook response received successfully');
 
+        // Check if newsletter generation was cancelled
+        const { data: currentNewsletter } = await supabase
+          .from('newsletters')
+          .select('status')
+          .eq('id', newsletterId)
+          .single();
+
+        if (currentNewsletter?.status !== 'generating') {
+          console.log('Newsletter generation was cancelled, discarding webhook result');
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              message: 'Geração foi cancelada pelo usuário' 
+            }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200
+            }
+          );
+        }
+
         // Update newsletter with webhook content
         const { error: updateError } = await supabase
           .from('newsletters')
@@ -327,6 +348,27 @@ Use a ferramenta format_newsletter para estruturar sua resposta.`;
     const newsletterContent = JSON.parse(toolCall.function.arguments);
     
     console.log('Updating newsletter with generated content...');
+
+    // Check if newsletter generation was cancelled
+    const { data: currentNewsletter } = await supabase
+      .from('newsletters')
+      .select('status')
+      .eq('id', newsletterId)
+      .single();
+
+    if (currentNewsletter?.status !== 'generating') {
+      console.log('Newsletter generation was cancelled, discarding AI result');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'Geração foi cancelada pelo usuário' 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+    }
 
     // Update newsletter with generated content
     const { error: updateError } = await supabase
