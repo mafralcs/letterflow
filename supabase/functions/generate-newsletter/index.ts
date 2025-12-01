@@ -111,7 +111,7 @@ serve(async (req) => {
 
         // Call external webhook with extended timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minute timeout
+        const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minute timeout
         
         let webhookResponse;
         try {
@@ -194,7 +194,7 @@ serve(async (req) => {
         let userMessage = 'Erro desconhecido';
         if (webhookError instanceof Error) {
           if (webhookError.name === 'AbortError' || webhookError.message.includes('abort')) {
-            userMessage = 'O webhook demorou muito para responder (timeout após 3 minutos). Verifique se o serviço está funcionando corretamente.';
+            userMessage = 'O webhook demorou muito para responder (timeout após 10 minutos). Verifique se o serviço está funcionando corretamente.';
           } else if (webhookError.message.includes('fetch')) {
             userMessage = `Erro ao conectar com o webhook: ${webhookError.message}`;
           } else {
