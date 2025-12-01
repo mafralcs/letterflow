@@ -109,15 +109,23 @@ serve(async (req) => {
           project_data: projectData
         };
 
-        // Call external webhook with timeout
-        const webhookResponse = await fetch(project.webhook_url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(webhookPayload),
-          signal: AbortSignal.timeout(60000), // 60 second timeout
-        });
+        // Call external webhook with extended timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minute timeout
+        
+        let webhookResponse;
+        try {
+          webhookResponse = await fetch(project.webhook_url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(webhookPayload),
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
 
         if (!webhookResponse.ok) {
           throw new Error(`Webhook retornou erro: ${webhookResponse.status}`);
@@ -182,18 +190,30 @@ serve(async (req) => {
       } catch (webhookError) {
         console.error('Webhook error:', webhookError);
         
+        // Determine user-friendly error message
+        let userMessage = 'Erro desconhecido';
+        if (webhookError instanceof Error) {
+          if (webhookError.name === 'AbortError' || webhookError.message.includes('abort')) {
+            userMessage = 'O webhook demorou muito para responder (timeout após 3 minutos). Verifique se o serviço está funcionando corretamente.';
+          } else if (webhookError.message.includes('fetch')) {
+            userMessage = `Erro ao conectar com o webhook: ${webhookError.message}`;
+          } else {
+            userMessage = webhookError.message;
+          }
+        }
+        
         // Update newsletter status to error
         await supabase
           .from('newsletters')
           .update({
             status: 'error',
-            error_message: `Erro no webhook: ${webhookError instanceof Error ? webhookError.message : 'Erro desconhecido'}`
+            error_message: `Erro no webhook: ${userMessage}`
           })
           .eq('id', newsletterId);
 
         return new Response(
           JSON.stringify({ 
-            error: `Erro no webhook: ${webhookError instanceof Error ? webhookError.message : 'Erro desconhecido'}` 
+            error: `Erro no webhook: ${userMessage}` 
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
