@@ -41,6 +41,8 @@ interface Spreadsheet {
   name: string;
   description: string | null;
   created_at: string;
+  columnCount?: number;
+  rowCount?: number;
 }
 
 export default function ProjectDetail() {
@@ -80,9 +82,31 @@ export default function ProjectDetail() {
       if (newslettersResult.error) throw newslettersResult.error;
       if (spreadsheetsResult.error) throw spreadsheetsResult.error;
 
+      // Fetch column and row counts for each spreadsheet
+      const spreadsheetsWithCounts = await Promise.all(
+        (spreadsheetsResult.data || []).map(async (spreadsheet) => {
+          const [columnsResult, rowsResult] = await Promise.all([
+            supabase
+              .from("spreadsheet_columns")
+              .select("id", { count: "exact", head: true })
+              .eq("spreadsheet_id", spreadsheet.id),
+            supabase
+              .from("spreadsheet_rows")
+              .select("id", { count: "exact", head: true })
+              .eq("spreadsheet_id", spreadsheet.id),
+          ]);
+
+          return {
+            ...spreadsheet,
+            columnCount: columnsResult.count || 0,
+            rowCount: rowsResult.count || 0,
+          };
+        })
+      );
+
       setProject(projectResult.data);
       setNewsletters(newslettersResult.data || []);
-      setSpreadsheets(spreadsheetsResult.data || []);
+      setSpreadsheets(spreadsheetsWithCounts);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar dados",
@@ -294,8 +318,8 @@ export default function ProjectDetail() {
                     projectId={id!}
                     name={spreadsheet.name}
                     description={spreadsheet.description || undefined}
-                    columnCount={0}
-                    rowCount={0}
+                    columnCount={spreadsheet.columnCount || 0}
+                    rowCount={spreadsheet.rowCount || 0}
                     onDelete={() => setDeleteSpreadsheetId(spreadsheet.id)}
                   />
                 ))}
