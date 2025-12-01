@@ -17,7 +17,7 @@ export default function Header() {
             <img 
               src={logo} 
               alt="LetterFlow" 
-              className="h-20 w-auto transition-all duration-300 group-hover:scale-105 group-hover:brightness-110 group-hover:drop-shadow-[0_0_15px_hsl(var(--primary)/0.5)]" 
+              className="h-12 sm:h-16 md:h-20 w-auto transition-all duration-300 group-hover:scale-105 group-hover:brightness-110 group-hover:drop-shadow-[0_0_15px_hsl(var(--primary)/0.5)]" 
             />
           </div>
 
