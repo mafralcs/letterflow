@@ -2,3 +2,6 @@ project_id = "cnnewzmpvtgugohneugn"
 
 [functions.generate-newsletter]
 verify_jwt = true
+
+[functions.newsletter-callback]
+verify_jwt = false

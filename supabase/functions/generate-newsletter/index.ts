@@ -88,10 +88,15 @@ serve(async (req) => {
       console.log('Using external webhook:', project.webhook_url);
 
       try {
+        // Prepare callback URL
+        const callbackUrl = `${supabaseUrl}/functions/v1/newsletter-callback`;
+        console.log('Callback URL:', callbackUrl);
+
         // Prepare payload for webhook
         const webhookPayload = {
           newsletter_id: newsletterId,
           newsletter_title: newsletter.title,
+          callback_url: callbackUrl,
           links,
           notes,
           project: {
@@ -109,77 +114,35 @@ serve(async (req) => {
           project_data: projectData
         };
 
-        // Call external webhook with extended timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minute timeout
-        
-        let webhookResponse;
-        try {
-          webhookResponse = await fetch(project.webhook_url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(webhookPayload),
-            signal: controller.signal,
-          });
-        } finally {
-          clearTimeout(timeoutId);
-        }
+        console.log('Sending fire-and-forget request to webhook...');
 
-        if (!webhookResponse.ok) {
-          throw new Error(`Webhook retornou erro: ${webhookResponse.status}`);
-        }
+        // Fire-and-forget: call webhook without waiting for response
+        fetch(project.webhook_url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(webhookPayload),
+        }).catch(err => {
+          console.error('Error sending webhook (fire-and-forget):', err);
+          // Update newsletter with error
+          supabase
+            .from('newsletters')
+            .update({
+              status: 'error',
+              error_message: `Erro ao enviar para webhook: ${err.message}`
+            })
+            .eq('id', newsletterId)
+            .then(() => console.log('Newsletter marked as error'));
+        });
 
-        const webhookData = await webhookResponse.json();
+        console.log('Webhook request sent, returning immediately');
 
-        // Validate response format
-        if (!webhookData.html_content || !webhookData.text_content) {
-          throw new Error('Webhook não retornou html_content e text_content');
-        }
-
-        console.log('Webhook response received successfully');
-
-        // Check if newsletter generation was cancelled
-        const { data: currentNewsletter } = await supabase
-          .from('newsletters')
-          .select('status')
-          .eq('id', newsletterId)
-          .single();
-
-        if (currentNewsletter?.status !== 'generating') {
-          console.log('Newsletter generation was cancelled, discarding webhook result');
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              message: 'Geração foi cancelada pelo usuário' 
-            }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200
-            }
-          );
-        }
-
-        // Update newsletter with webhook content
-        const { error: updateError } = await supabase
-          .from('newsletters')
-          .update({
-            html_content: webhookData.html_content,
-            text_content: webhookData.text_content,
-            status: 'final',
-            error_message: null
-          })
-          .eq('id', newsletterId);
-
-        if (updateError) throw updateError;
-
-        console.log('Newsletter generated successfully via webhook!');
-
+        // Return immediately - webhook will call callback when done
         return new Response(
           JSON.stringify({ 
             success: true, 
-            message: 'Newsletter gerada com sucesso via webhook!' 
+            message: 'Requisição enviada para o webhook. Aguarde o processamento.' 
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -190,30 +153,18 @@ serve(async (req) => {
       } catch (webhookError) {
         console.error('Webhook error:', webhookError);
         
-        // Determine user-friendly error message
-        let userMessage = 'Erro desconhecido';
-        if (webhookError instanceof Error) {
-          if (webhookError.name === 'AbortError' || webhookError.message.includes('abort')) {
-            userMessage = 'O webhook demorou muito para responder (timeout após 10 minutos). Verifique se o serviço está funcionando corretamente.';
-          } else if (webhookError.message.includes('fetch')) {
-            userMessage = `Erro ao conectar com o webhook: ${webhookError.message}`;
-          } else {
-            userMessage = webhookError.message;
-          }
-        }
-        
         // Update newsletter status to error
         await supabase
           .from('newsletters')
           .update({
             status: 'error',
-            error_message: `Erro no webhook: ${userMessage}`
+            error_message: `Erro ao enviar para webhook: ${webhookError instanceof Error ? webhookError.message : 'Erro desconhecido'}`
           })
           .eq('id', newsletterId);
 
         return new Response(
           JSON.stringify({ 
-            error: `Erro no webhook: ${userMessage}` 
+            error: `Erro ao enviar para webhook: ${webhookError instanceof Error ? webhookError.message : 'Erro desconhecido'}` 
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
